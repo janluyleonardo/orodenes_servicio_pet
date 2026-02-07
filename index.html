@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consentimiento Informado - Universal Pet Shop</title>
+    <link rel="shortcut icon" href="images/Logo_Universal Pet Shop.png" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .signature-pad { border: 1px solid #ccc; width: 100%; height: 200px; }
+        #signatureCanvas { background-color: #f8f9fa; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row mb-3" boder="1">
+            <div class="col-md-10 text-center" >
+                <h1 class="display-5 fw-bold">ESTETICA CANINA UNIVERSAL PET SHOP</h1>
+                <h4 class="text-center mb-4">CONSENTIMIENTO INFORMADO SOBRE LA ESTETICA DE TU MASCOTA</h4>
+            </div>
+            <div class="col-md-2 d-flex align-items-center justify-content-center" border="1">
+                <img src="images/Logo_Universal Pet Shop.png" alt="Universal Pet Shop Logo" class="mb-3" style="max-width: 250px;">
+            </div>
+        </div>
+        <form id="consentForm">
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input type="date"
+                        class="form-control"
+                        id="fecha"
+                        name="fecha"
+                        required>
+                </div>
+                <div class="col-md-2">
+                    <label for="hora" class="form-label">hora</label>
+                    <input type="time"
+                        class="form-control"
+                        id="hora"
+                        name="hora"
+                        required>
+                </div>
+                <div class="col-md-2">
+                    <label for="precio" class="form-label">precio</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">$</span>
+                        <input type="text" class="form-control" aria-label="Amount (to the nearest dollar)">
+                        <span class="input-group-text">.00</span>
+                    </div>
+                </div>
+            </div>            
+            <!-- Datos generales mascota-->
+            <div class="row">
+                <label class="form-label">DATOS GENERALES DE LA MASCOTA</label>
+                <hr>
+                <div class="col-md-4">
+                    <label class="form-label">Nombre del perrito</label>
+                    <input type="text" class="form-control" id="petName" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="petBreed" class="form-label">Raza o tipo</label>
+                    <select class="form-select" id="petBreed" required onchange="toggleOtherBreed()">
+                        <option value="" selected disabled>Selecciona una raza</option>
+                        <!-- Razas de perros y gatos (ejemplo) -->
+                        <option value="Labrador Retriever">Labrador Retriever</option>
+                        <option value="Pastor Alemán">Pastor Alemán</option>
+                        <option value="Persa">Persa</option>
+                        <option value="Siamés">Siamés</option>
+                        <option value="Otro">Otro (especificar)</option>
+                    </select>
+                    <!-- Campo oculto para "Otro" -->
+                    <input type="text" class="form-control mt-2" id="otherBreedInput" placeholder="Especifica la raza" style="display: none;">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Edad</label>
+                    <input type="number" class="form-control" id="petAge" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teléfono</label>
+                    <input type="tel" class="form-control" id="ownerPhone" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Nombre del dueño</label>
+                    <input type="text" class="form-control" id="ownerName" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Domicilio</label>
+                    <input type="text" class="form-control" id="ownerAddress" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Correo</label>
+                    <input type="email" class="form-control" id="ownerEmail" required>
+                </div>
+            </div>
+            <!-- ... (Agrega aquí todos los campos del PDF, como edad, dueño, teléfono, etc.) -->
+            <!-- Checkboxes para antecedentes -->
+            <div class="row mt-3">
+                <label class="form-label">ANTECEDENTES DE LA MASCOTA Y OBSERVACIONES DEL DUEÑO</label>
+                <hr>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="anxiety">
+                    <label class="form-check-label">Ansiedad</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="aggressiveness">
+                    <label class="form-check-label">Agresividad</label>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Enfermedades</label>
+                    <input type="text" class="form-control" id="petDiseases" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Observaciones</label>
+                    <input type="text" class="form-control" id="petObservations" required>
+                </div>
+            </div>
+            <!-- reglamento -->
+            <div class="row mt-3">
+                <label class="form-label">REGLAMENTO DE LA ESTÉTICA</label>
+                <hr>
+                <ol>
+                    <li>En esta estética prevalece la paciencia, respeto, confianza e higiene para tu mascota.</li>
+                    <li>Cupo limitado por día para brindar calidad y calidez.</li>
+                    <li>Tu mascota jamás será maltratada.</li>
+                    <li>El perro durante su estancia en la estética móvil nunca se queda solo.</li>
+                    <li>El mobiliario de la estética está en las mejores condiciones para seguridad de tu mascota.</li>
+                    <li>No se utilizan anestésicos.</li>
+                </ol>
+                <h4>Beneficios del proceso estético:</h4>
+                <p>Procurar mejorar su imagen, bienestar, higiene y salud.</p>
+            </div>
+
+            <!-- Canvas para firma -->
+            <div class="mb-3">
+                <label class="form-label">Firma del Dueño</label>
+                <div class="signature-pad">
+                    <canvas id="signatureCanvas"></canvas>
+                </div>
+                <button type="button" class="btn btn-secondary mt-2" id="clearSignature">Limpiar Firma</button>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Generar PDF</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/validacion_otro.js"></script>
+</body>
+</html>
