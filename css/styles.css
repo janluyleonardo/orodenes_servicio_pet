@@ -1,0 +1,31 @@
+/*
+* estilo para ocultar la barra lateral de scroll en la pagina
+* autor: Janluy Leonardo Moreno Coronado MORJAN-DEV
+*/
+::-webkit-scrollbar {
+  display: none;
+}
+/* 
+ * estilos de pagina para marca de agua
+ * autor: Janluy Leonardo Moreno Coronado MORJAN-DEV
+ */
+body {
+    position: relative;
+    min-height: 100vh;
+}
+
+body::after {
+    content: "";
+    background-image: url('../images/Logo_Universal Pet Shop.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 60%; /* Ajusta el tamaño según necesites */
+    opacity: 0.1; /* Transparencia para efecto "marca de agua" */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1; /* Detrás del contenido */
+    pointer-events: none; /* Permite interacción con el contenido */
+}

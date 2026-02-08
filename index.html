@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consentimiento Informado - Universal Pet Shop</title>
-    <link rel="shortcut icon" href="images/Logo_Universal Pet Shop.png" type="image/x-icon">
+    <link rel="shortcut icon" href="images/Logo_redondo.png"type="image/x-icon">
+    <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .signature-pad { border: 1px solid #ccc; width: 100%; height: 200px; }
@@ -13,7 +14,7 @@
 </head>
 <body>
     <div class="container mt-4">
-        <div class="row mb-3" boder="1">
+        <div class="row mb-3">
             <div class="col-md-10 text-center" >
                 <h1 class="display-5 fw-bold">ESTETICA CANINA UNIVERSAL PET SHOP</h1>
                 <h4 class="text-center mb-4">CONSENTIMIENTO INFORMADO SOBRE LA ESTETICA DE TU MASCOTA</h4>
@@ -54,7 +55,7 @@
                 <label class="form-label">DATOS GENERALES DE LA MASCOTA</label>
                 <hr>
                 <div class="col-md-4">
-                    <label class="form-label">Nombre del perrito</label>
+                    <label class="form-label">Nombre de la mascota</label>
                     <input type="text" class="form-control" id="petName" required>
                 </div>
                 <div class="col-md-3">
@@ -97,11 +98,11 @@
             <div class="row mt-3">
                 <label class="form-label">ANTECEDENTES DE LA MASCOTA Y OBSERVACIONES DEL DUEÑO</label>
                 <hr>
-                <div class="form-check">
+                <div class="form-check col-md-6">
                     <input class="form-check-input" type="checkbox" id="anxiety">
                     <label class="form-check-label">Ansiedad</label>
                 </div>
-                <div class="form-check">
+                <div class="form-check col-md-6">
                     <input class="form-check-input" type="checkbox" id="aggressiveness">
                     <label class="form-check-label">Agresividad</label>
                 </div>
@@ -126,21 +127,135 @@
                     <li>El mobiliario de la estética está en las mejores condiciones para seguridad de tu mascota.</li>
                     <li>No se utilizan anestésicos.</li>
                 </ol>
-                <h4>Beneficios del proceso estético:</h4>
-                <p>Procurar mejorar su imagen, bienestar, higiene y salud.</p>
+                <p>
+                    <strong>Beneficios del proceso estético:</strong>
+                    Procurar mejorar su imagen, bienestar, higiene y salud.
+                </p>
             </div>
-
-            <!-- Canvas para firma -->
-            <div class="mb-3">
-                <label class="form-label">Firma del Dueño</label>
-                <div class="signature-pad">
-                    <canvas id="signatureCanvas"></canvas>
+            <div class="row mt-3">
+                <label class="form-label">CONDICIONES DE LA ESTÉTICA</label>
+                <hr>
+                <ol>
+                    <li>Esta estética no se hace responsable por los posibles riesgos mencionados.</li>
+                    <li>No se admiten mascotas enfermas.</li>
+                    <li>El dueño tiene la obligación de revisar a su mascota al momento de ser entregada, después de este tiempo la estética no se hace responsable de cualquier problema que llegase a presentar la misma.</li>
+                    <li>Reservamos el servicio si la estilista considera que la mascota no es apta o se puede dañar el estado físico de ambos.</li>
+                    <li>Los precios pueden variar de acuerdo a la raza, condiciones del pelo, piel o talla de tu mascota, pueden aplicar cargos extra en peluquería y otros servicios a valoración de la estilista.</li>
+                </ol>
+            </div>
+            
+            <div class="row mt-3">
+                <label class="form-label">DECLARACION DE ACEPTACION DEL SERVICIO</label>
+                <hr>
+                <div class="mt-1">
+                    <p id="consentText">
+                        Yo, <strong class="text-capitalize"><span id="ownerNameDisplay"></span></strong>, recibo información clara sobre los beneficios del proceso estético que se llevará a cabo en mi mascota, como también los riesgos posibles que existen como: <br>
+                    </p>
+                    <p>
+                        Irritaciones y cortadas de la piel por exceso de pelo en malas condiciones, irritación perianal por rascado de la mascota, irritación de ojos por sensibilidad al shampoo, convulsión u ojos rojos por estrés.
+                    </p>
+                    <p>
+                        Conforme la información que he leído y comprendido he podido preguntar y aclarar mis dudas, por eso he tomado consciente y libremente la decisión de autorizar el procedimiento. Deslindando de toda responsabilidad a la estética canina <strong>Universal PetShop</strong>.
+                    </p>
                 </div>
-                <button type="button" class="btn btn-secondary mt-2" id="clearSignature">Limpiar Firma</button>
+            </div>
+            <!-- Canvas para firma -->
+            <div class="m-auto col-md-6 mb-3">
+                <div class="d-flex flex-column align-items-center justify-content-center bg-light p-3 rounded">
+                    <canvas id="signatureCanvas" class="border" style="width: 100%; height: 150px; touch-action: none;"></canvas>
+                    <label class="form-label mt-2 text-center fw-bold mb-2">FIRMA DEL DUEÑO O QUIEN ENTREGA A LA MASCOTA</label>
+                    <button type="button" class="btn btn-secondary mt-2" id="clearSignature">Limpiar Firma</button>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-primary">Generar PDF</button>
         </form>
+    </div>
+
+    <!-- oculto Codigo de pdf ya con datos -->
+    <!-- <div id="pdfContent" style="width: 600px; padding: 20px; font-family: Arial; position: relative;"> -->
+    <div id="pdfContent" style="display: none; width: 600px; padding: 20px; font-family: Arial; position: relative;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-10 d-flex flex-column justify-content-center align-items-center">
+                    <h5 class="fw-bold">ESTETICA CANINA UNIVERSAL PET SHOP</h5>
+                    <h6 class="text-center">CONSENTIMIENTO INFORMADO SOBRE LA ESTETICA DE TU MASCOTA</h6>
+                </div>
+                <div class="col-md-2 d-flex align-items-center justify-content-center">
+                    <img src="images/logo-vertical.png" alt="Universal Pet Shop Logo"  style="max-width: 100%;">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="fecha" class="form-label"><strong>Fecha: </strong> </label>
+                    <span id="pdfFecha"></span>
+                </div>
+                <div class="col-md-4">
+                    <label for="hora" class="form-label"><strong>Hora: </strong> </label>
+                    <span id="pdfHora"></span>
+                </div>
+                <div class="col-md-4">
+                    <label for="precio" class="form-label"><strong>Precio: </strong>$ </label>
+                    <span id="pdfPrecio"></span>
+                </div>
+            </div>
+            <div class="row">
+                <label><strong>DATOS GENERALES DE LA MASCOTA</strong></label>
+                <div class="col-md-7">
+                    <label class="form-label">Nombre de la mascota:</label>
+                    <span class="border-bottom" id="pdfPetName"></span>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Raza:</label>
+                    <span class="border-bottom" id="pdfPetBreed"></span>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Edad</label>
+                    <span class="border-bottom" id="pdfPetAge"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Teléfono:</label>
+                    <span class="border-bottom" id="pdfPetPhone"></span>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Nombre del dueño</label>
+                    <span class="border-bottom" id="pdfOwnerName"></span>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Domicilio:</label>
+                    <span class="border-bottom" id="pdfOwnerAddress"></span>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Correo</label>
+                    <span class="border-bottom" id="pdfOwnerEmail"></span>
+                </div>
+            </div>
+            <div class="row mt-1 ">
+                <label><strong>CONDICIONES DE LA ESTÉTICA</strong></label>
+                <ol style="font-size:xx-small">
+                    <li>Esta estética no se hace responsable por los posibles riesgos mencionados.</li>
+                    <li>No se admiten mascotas enfermas.</li>
+                    <li>El dueño tiene la obligación de revisar a su mascota al momento de ser entregada, después de este tiempo la estética no se hace responsable de cualquier problema que llegase a presentar la misma.</li>
+                    <li>Reservamos el servicio si la estilista considera que la mascota no es apta o se puede dañar el estado físico de ambos.</li>
+                    <li>Los precios pueden variar de acuerdo a la raza, condiciones del pelo, piel o talla de tu mascota, pueden aplicar cargos extra en peluquería y otros servicios a valoración de la estilista.</li>
+                </ol>
+            </div>
+            <div class="row mt-1 ">
+                <label><strong>DECLARACION DE ACEPTACION DEL SERVICIO</strong></label>
+                <div class="mt-1">
+                    <p id="consentText" style="font-size:xx-small">
+                        Yo, <strong class="text-capitalize"><span id="pdfOwnerNameDisplay"></span></strong>, recibo información clara sobre los beneficios del proceso estético que se llevará a cabo en mi mascota, como también los riesgos posibles que existen como: <br>
+                        Irritaciones y cortadas de la piel por exceso de pelo en malas condiciones, irritación perianal por rascado de la mascota, irritación de ojos por sensibilidad al shampoo, convulsión u ojos rojos por estrés. <br>
+                        Conforme la información que he leído y comprendido he podido preguntar y aclarar mis dudas, por eso he tomado consciente y libremente la decisión de autorizar el procedimiento. Deslindando de toda responsabilidad a la estética canina <strong>Universal PetShop</strong>.
+                    </p>
+                </div>
+            </div>
+            <!-- Agrega el resto de los campos -->
+            <div class="text-center mt-5">
+                <img id="pdfSignature" style="width: 200px; height: 80px;"/>
+                <p class="fw-bold border-top pt-2">FIRMA DEL DUEÑO O QUIEN ENTREGA A LA MASCOTA</p>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
@@ -148,5 +263,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/app.js"></script>
     <script src="js/validacion_otro.js"></script>
+    <script src="js/auto-complete-name.js"></script>
 </body>
 </html>
