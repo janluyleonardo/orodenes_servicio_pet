@@ -3,17 +3,29 @@ const canvas = document.getElementById('signatureCanvas');
 const ctx = canvas.getContext('2d');
 let isDrawing = false;
 
+function getCanvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = event.touches?.[0] || event.changedTouches?.[0];
+    const clientX = touch?.clientX ?? event.clientX;
+    const clientY = touch?.clientY ?? event.clientY;
+    return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+    };
+}
+
 // Configurar tamaño del canvas
 function resizeCanvas() {
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    canvas.width = canvas.offsetWidth * ratio;
-    canvas.height = canvas.offsetHeight * ratio;
-    ctx.scale(ratio, ratio);
-    
-    // Mantener la firma si existe (opcional, pero al redimensionar se borra el canvas)
-    // Para simplificar, limpiamos, pero en una app real podríamos guardar/restaurar
-    ctx.fillStyle = '#f8f9fa00'; // Transparente
+    const width = canvas.offsetWidth;
+    const height = canvas.offsetHeight;
+
+    canvas.width = Math.round(width * ratio);
+    canvas.height = Math.round(height * ratio);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
 }
 
 window.addEventListener('resize', resizeCanvas);
@@ -23,35 +35,56 @@ resizeCanvas();
 canvas.addEventListener('pointerdown', startDrawing);
 canvas.addEventListener('pointermove', draw);
 canvas.addEventListener('pointerup', stopDrawing);
+canvas.addEventListener('pointercancel', stopDrawing);
 canvas.addEventListener('pointerleave', stopDrawing);
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseleave', stopDrawing);
+canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchend', stopDrawing);
+canvas.addEventListener('touchcancel', stopDrawing);
 
 // Funciones para dibujar
 function startDrawing(e) {
+    e.preventDefault();
     isDrawing = true;
-    draw(e);
+    const point = getCanvasPoint(e);
+
+    if (e.pointerId !== undefined && canvas.setPointerCapture) {
+        canvas.setPointerCapture(e.pointerId);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#564ca0';
 }
 
 function draw(e) {
     if (!isDrawing) return;
-    e.preventDefault(); // Prevenir scroll en táctil
-    
-    // Obtener coordenadas relativas al canvas
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    e.preventDefault();
 
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#564ca0';
-    
-    ctx.lineTo(x, y);
+    const point = getCanvasPoint(e);
+    ctx.lineTo(point.x, point.y);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(point.x, point.y);
 }
 
-function stopDrawing() {
+function stopDrawing(e) {
+    if (!isDrawing) return;
     isDrawing = false;
+    if (e?.pointerId !== undefined && canvas.releasePointerCapture) {
+        try {
+            canvas.releasePointerCapture(e.pointerId);
+        } catch (error) {
+            // Ignorar si el pointer no fue capturado
+        }
+    }
     ctx.beginPath();
 }
 

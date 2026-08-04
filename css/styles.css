@@ -48,11 +48,19 @@ canvas {
     background-color: #f8f9fa;
 }
 
-#signatureCanvas { 
-    background-color: #f8f9fa; 
-    width: 100%; 
-    height: 100%; 
-    cursor: crosshair; /* Cursor visual para firmar */
+#signatureCanvas {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 100%;
+    height: 180px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    cursor: crosshair;
+    display: block;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* Ajustes para móviles */
