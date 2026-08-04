@@ -29,3 +29,35 @@ body::after {
     z-index: -1; /* Detrás del contenido */
     pointer-events: none; /* Permite interacción con el contenido */
 }
+
+/* 
+ * Estilos para el canvas de firma y responsividad
+ * Agregado para soporte tablet y touch
+ */
+canvas {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.signature-pad { 
+    border: 1px solid #ccc; 
+    width: 100%; 
+    height: 200px;
+    position: relative;
+    background-color: #f8f9fa;
+}
+
+#signatureCanvas { 
+    background-color: #f8f9fa; 
+    width: 100%; 
+    height: 100%; 
+    cursor: crosshair; /* Cursor visual para firmar */
+}
+
+/* Ajustes para móviles */
+@media (max-width: 576px) {
+    .signature-pad {
+        height: 180px;
+    }
+}
