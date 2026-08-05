@@ -141,7 +141,8 @@ function saveFormData() {
     localStorage.setItem('petShopFormData', JSON.stringify(formData));
 }
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api/consentimientos';
+const API_BASE_PATH = '/consentimientos-back/public/api/consentimientos';
+const API_BASE_URL = `${window.location.origin}${API_BASE_PATH}`;
 
 async function fetchConsentimientoByCedula(cedula) {
     if (!cedula) return null;
