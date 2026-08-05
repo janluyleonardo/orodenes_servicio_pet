@@ -14,6 +14,34 @@ function getCanvasPoint(event) {
     };
 }
 
+function setSubmitError(message) {
+    const errorContainer = document.getElementById('submitError');
+    if (!errorContainer) return;
+    if (!message) {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+        return;
+    }
+    errorContainer.textContent = message;
+    errorContainer.style.display = 'block';
+}
+
+function clearSubmitError() {
+    setSubmitError('');
+}
+
+function setSubmitLoading(isLoading) {
+    const submitButton = document.getElementById('submitButton');
+    if (!submitButton) return;
+    submitButton.disabled = isLoading;
+    submitButton.textContent = isLoading ? 'Guardando...' : 'Generar PDF';
+}
+
+function normalizeTimeValue(value) {
+    if (!value) return value;
+    return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
 // Configurar tamaño del canvas
 function resizeCanvas() {
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -113,6 +141,112 @@ function saveFormData() {
     localStorage.setItem('petShopFormData', JSON.stringify(formData));
 }
 
+const API_BASE_URL = 'http://127.0.0.1:8000/api/consentimientos';
+
+async function fetchConsentimientoByCedula(cedula) {
+    if (!cedula) return null;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(cedula)}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                return null;
+            }
+            console.error('Backend error fetching consentimiento:', response.status, response.statusText);
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching consentimiento by cedula:', error);
+        return null;
+    }
+}
+
+function populateFormFromConsentimiento(data) {
+    if (!data) return;
+
+    const fieldMap = {
+        cedula: 'cedula',
+        fecha: 'fecha',
+        precio: 'precio',
+        nombre_mascota: 'petName',
+        raza: 'petBreed',
+        otro_raza: 'otherBreedInput',
+        edad: 'petAge',
+        telefono: 'ownerPhone',
+        nombre_dueno: 'ownerName',
+        domicilio: 'ownerAddress',
+        correo: 'ownerEmail',
+        enfermedades: 'petDiseases',
+        observaciones: 'petObservations'
+    };
+
+    Object.entries(fieldMap).forEach(([apiKey, inputId]) => {
+        const input = document.getElementById(inputId);
+        if (input && data[apiKey] !== undefined && data[apiKey] !== null) {
+            input.value = data[apiKey];
+            input.dispatchEvent(new Event('input'));
+            input.dispatchEvent(new Event('change'));
+        }
+    });
+
+    if (data.raza === 'Otro' && data.otro_raza) {
+        const otherInput = document.getElementById('otherBreedInput');
+        otherInput.style.display = 'block';
+        otherInput.value = data.otro_raza;
+        otherInput.required = true;
+    }
+
+    if (data.firma && typeof data.firma === 'string' && data.firma.startsWith('data:image/')) {
+        const signatureImg = document.getElementById('pdfSignature');
+        if (signatureImg) {
+            signatureImg.src = data.firma;
+        }
+    }
+}
+
+function setCedulaStatus(message, isError = true) {
+    const status = document.getElementById('cedulaStatus');
+    if (!status) return;
+    status.textContent = message || '';
+    status.style.display = message ? 'block' : 'none';
+    status.classList.toggle('text-danger', isError);
+    status.classList.toggle('text-success', !isError);
+}
+
+function attachCedulaLookup() {
+    const cedulaInput = document.getElementById('cedula');
+    if (!cedulaInput) return;
+
+    const clearStatus = () => setCedulaStatus('');
+    cedulaInput.addEventListener('input', clearStatus);
+
+    cedulaInput.addEventListener('blur', async (e) => {
+        const cedula = e.target.value.trim();
+        if (!cedula) {
+            setCedulaStatus('');
+            return;
+        }
+
+        const record = await fetchConsentimientoByCedula(cedula);
+        if (record) {
+            populateFormFromConsentimiento(record);
+            setCurrentDateTime();
+            // setCedulaStatus('Registro encontrado.', false);
+        } else {
+            setCedulaStatus('No existe un consentimiento registrado para esta cédula.');
+        }
+    });
+}
+
 // Cargar datos de localStorage
 function loadFormData() {
     const savedData = localStorage.getItem('petShopFormData');
@@ -159,10 +293,34 @@ function setDefaultDateTime() {
     }
 }
 
+function setCurrentTime() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeInput = document.getElementById('hora');
+    if (timeInput) {
+        timeInput.value = `${hours}:${minutes}`;
+    }
+}
+
+function setCurrentDateTime() {
+    const now = new Date();
+    const dateInput = document.getElementById('fecha');
+    const timeInput = document.getElementById('hora');
+
+    if (dateInput) {
+        dateInput.value = now.toISOString().split('T')[0];
+    }
+    if (timeInput) {
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
+    }
+}
+
 // Función para limpiar todo (Reset)
 function resetForm() {
     if (confirm('¿Estás seguro de que quieres borrar todos los datos del formulario?')) {
-        localStorage.removeItem('petShopFormData');
         document.getElementById('consentForm').reset();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
@@ -176,14 +334,13 @@ function resetForm() {
 
 // Inicializar listeners
 document.addEventListener('DOMContentLoaded', () => {
-    loadFormData();
-    
-    // Autosave en inputs
-    const inputs = document.querySelectorAll('#consentForm input, #consentForm select, #consentForm textarea');
-    inputs.forEach(input => {
-        input.addEventListener('input', saveFormData);
-        input.addEventListener('change', saveFormData);
-    });
+    setDefaultDateTime();
+    attachCedulaLookup();
+
+    const setTimeBtn = document.getElementById('setCurrentTimeBtn');
+    if (setTimeBtn) {
+        setTimeBtn.addEventListener('click', setCurrentTime);
+    }
 
     // Botón de limpiar formulario
     const clearBtn = document.getElementById('clearFormBtn');
@@ -194,41 +351,153 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // --- GENERACIÓN DE PDF ---
-document.getElementById('consentForm').addEventListener('submit', function(e) {
+function buildConsentimientoPayload() {
+    const precioInput = document.querySelector('input[aria-label="Amount (to the nearest dollar)"]');
+    const precioRaw = precioInput ? precioInput.value.trim() : '';
+    const precioSanitizado = precioRaw.replace(/[^0-9.,]/g, '').trim();
+    const antecedentesLista = [];
+
+    if (document.getElementById('anxiety')?.checked) antecedentesLista.push('Ansiedad');
+    if (document.getElementById('aggressiveness')?.checked) antecedentesLista.push('Agresividad');
+
+    return {
+        cedula: document.getElementById('cedula').value.trim(),
+        fecha: document.getElementById('fecha').value,
+        hora: document.getElementById('hora').value,
+        precio: precioSanitizado,
+        nombre_mascota: document.getElementById('petName').value,
+        raza: document.getElementById('petBreed').value,
+        otro_raza: document.getElementById('petBreed').value === 'Otro' ? document.getElementById('otherBreedInput').value : '',
+        edad: document.getElementById('petAge').value,
+        telefono: document.getElementById('ownerPhone').value,
+        nombre_dueno: document.getElementById('ownerName').value,
+        domicilio: document.getElementById('ownerAddress').value,
+        correo: document.getElementById('ownerEmail').value,
+        enfermedades: document.getElementById('petDiseases').value,
+        observaciones: document.getElementById('petObservations').value,
+        antecedentes: antecedentesLista.join(', '),
+        ansiedad: document.getElementById('anxiety')?.checked ?? false,
+        agresividad: document.getElementById('aggressiveness')?.checked ?? false,
+        firma: canvas.toDataURL('image/png')
+    };
+}
+
+async function saveConsentimiento(data) {
+    try {
+        const response = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            cache: 'no-store',
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            let errorBody;
+            try {
+                errorBody = await response.json();
+            } catch (jsonError) {
+                errorBody = await response.text();
+            }
+
+            console.error('Error guardando consentimiento:', response.status, response.statusText, errorBody);
+
+            let validationMessage = '';
+            if (typeof errorBody === 'object' && errorBody !== null) {
+                if (errorBody.message) {
+                    validationMessage = errorBody.message;
+                }
+                if (errorBody.errors) {
+                    const fieldErrors = Object.values(errorBody.errors).flat();
+                    if (fieldErrors.length > 0) {
+                        validationMessage = fieldErrors.join(' ');
+                    }
+                }
+                if (!validationMessage) {
+                    validationMessage = JSON.stringify(errorBody);
+                }
+            } else {
+                validationMessage = String(errorBody);
+            }
+
+            setSubmitError(validationMessage || 'Error guardando el consentimiento.');
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error guardando consentimiento:', error);
+        setSubmitError('Error guardando el consentimiento. Revisa la consola para más detalles.');
+        return null;
+    }
+}
+
+function fillPdfContent(data) {
+    const precioInput = document.querySelector('input[aria-label="Amount (to the nearest dollar)"]');
+    document.getElementById('pdfCedula').textContent = data.cedula || '';
+    document.getElementById('pdfFecha').textContent = data.fecha || '';
+    document.getElementById('pdfHora').textContent = data.hora || '';
+    document.getElementById('pdfPrecio').textContent = data.precio || (precioInput ? precioInput.value : '');
+    document.getElementById('pdfPetName').textContent = data.nombre_mascota || '';
+    document.getElementById('pdfPetBreed').textContent = data.raza === 'Otro' ? data.otro_raza || 'Otro' : data.raza || '';
+    document.getElementById('pdfPetAge').textContent = data.edad || '';
+    document.getElementById('pdfPetPhone').textContent = data.telefono || '';
+    document.getElementById('pdfOwnerName').textContent = data.nombre_dueno || '';
+    document.getElementById('pdfOwnerAddress').textContent = data.domicilio || '';
+    document.getElementById('pdfOwnerEmail').textContent = data.correo || '';
+    document.getElementById('pdfOwnerNameDisplay').textContent = data.nombre_dueno || '';
+
+    const signatureImg = document.getElementById('pdfSignature');
+    if (signatureImg && data.firma && data.firma.startsWith('data:image/')) {
+        signatureImg.src = data.firma;
+    }
+}
+
+function waitForImageLoad(img) {
+    return new Promise(resolve => {
+        if (!img) {
+            resolve();
+            return;
+        }
+        if (img.complete && img.naturalWidth !== 0) {
+            resolve();
+            return;
+        }
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+    });
+}
+
+document.getElementById('consentForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // 1. Actualizar el HTML oculto con los datos del formulario
-    document.getElementById('pdfFecha').textContent = document.getElementById('fecha').value;
-    document.getElementById('pdfHora').textContent = document.getElementById('hora').value;
-    // Seleccionar el precio correctamente (usando el aria-label que tiene)
-    const precioInput = document.querySelector('input[aria-label="Amount (to the nearest dollar)"]');
-    document.getElementById('pdfPrecio').textContent = precioInput ? precioInput.value : '';
-    
-    document.getElementById('pdfPetName').textContent = document.getElementById('petName').value;
-    document.getElementById('pdfPetBreed').textContent = document.getElementById('petBreed').value;
-    document.getElementById('pdfPetAge').textContent = document.getElementById('petAge').value;
-    document.getElementById('pdfPetPhone').textContent = document.getElementById('ownerPhone').value;
-    document.getElementById('pdfOwnerName').textContent = document.getElementById('ownerName').value;
-    document.getElementById('pdfOwnerAddress').textContent = document.getElementById('ownerAddress').value;
-    document.getElementById('pdfOwnerEmail').textContent = document.getElementById('ownerEmail').value;
-    
-    document.getElementById('pdfOwnerNameDisplay').textContent = document.getElementById('ownerName').value;
+    clearSubmitError();
+    setSubmitLoading(true);
 
-    // 2. Asignar la firma
-    const signatureImg = document.getElementById('pdfSignature');
-    if (signatureImg) {
-        signatureImg.src = canvas.toDataURL('image/png');
+    const payload = buildConsentimientoPayload();
+    payload.hora = normalizeTimeValue(payload.hora);
+
+    const savedRecord = await saveConsentimiento(payload);
+    setSubmitLoading(false);
+
+    if (!savedRecord) {
+        return;
     }
 
-    // 3. Mostrar temporalmente el contenido oculto
+    setSubmitError('Consentimiento guardado correctamente.');
+    fillPdfContent(payload);
+
     const pdfContent = document.getElementById('pdfContent');
     pdfContent.style.display = 'block';
-    
-    // 4. Usar html2canvas para capturar el contenido
+    const signatureImg = document.getElementById('pdfSignature');
+
+    await waitForImageLoad(signatureImg);
+
     html2canvas(pdfContent, { scale: 2, logging: false, useCORS: true }).then(canvasResult => {
         const imgData = canvasResult.toDataURL('image/png');
 
-        // 5. Crear el PDF con jsPDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -242,10 +511,10 @@ document.getElementById('consentForm').addEventListener('submit', function(e) {
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
         pdf.save('consentimiento_informado.pdf');
         
-        // 6. Ocultar nuevamente el contenido
         pdfContent.style.display = 'none';
-        
-        // Opcional: ofrecer limpiar el formulario después de guardar
-        // if(confirm("PDF generado. ¿Deseas limpiar el formulario?")) { resetForm(); }
+    }).catch(error => {
+        console.error('Error generando PDF:', error);
+        setSubmitError('Ocurrió un error al generar el PDF.');
+        pdfContent.style.display = 'none';
     });
 });
