@@ -14,28 +14,34 @@ function getCanvasPoint(event) {
     };
 }
 
-function setSubmitError(message) {
-    const errorContainer = document.getElementById('submitError');
-    const footer = document.getElementById('appErrorFooter');
-    const footerMessage = document.getElementById('footerErrorMessage');
-    if (!errorContainer || !footer || !footerMessage) return;
+function setSubmitMessage(message, type = 'error') {
+    const messageContainer = document.getElementById('submitMessage');
+    const footer = document.getElementById('appMessageFooter');
+    const footerMessage = document.getElementById('footerMessageText');
+    const footerButton = document.getElementById('clearFooterMessage');
+    if (!messageContainer || !footer || !footerMessage || !footerButton) return;
+
+    const isError = type !== 'success';
+    messageContainer.textContent = message;
+    messageContainer.style.display = message ? 'block' : 'none';
+    messageContainer.classList.toggle('text-danger', isError);
+    messageContainer.classList.toggle('text-success', !isError);
 
     if (!message) {
-        errorContainer.style.display = 'none';
-        errorContainer.textContent = '';
         footer.classList.add('d-none');
         footerMessage.textContent = '';
         return;
     }
 
-    errorContainer.textContent = message;
-    errorContainer.style.display = 'block';
     footerMessage.textContent = message;
     footer.classList.remove('d-none');
+    footer.classList.toggle('bg-danger', isError);
+    footer.classList.toggle('bg-success', !isError);
+    footer.classList.toggle('text-white', true);
 }
 
-function clearSubmitError() {
-    setSubmitError('');
+function clearSubmitMessage() {
+    setSubmitMessage('');
 }
 
 function setSubmitLoading(isLoading) {
@@ -48,6 +54,11 @@ function setSubmitLoading(isLoading) {
 function normalizeTimeValue(value) {
     if (!value) return value;
     return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
+function normalizePhoneValue(value) {
+    if (!value) return '';
+    return String(value).replace(/[^0-9]/g, '').trim();
 }
 
 // Configurar tamaño del canvas
@@ -152,6 +163,44 @@ function saveFormData() {
 const API_BASE_PATH = '/consentimientos-back/public/api/consentimientos';
 const API_BASE_URL = `${window.location.origin}${API_BASE_PATH}`;
 
+// IDs de todos los campos que se bloquean hasta completar la búsqueda por teléfono
+const LOCKABLE_FIELDS = [
+    'ownerName', 'petName', 'petBreed', 'otherBreedInput', 'petAge',
+    'ownerAddress', 'ownerEmail', 'petDiseases', 'petObservations',
+    'anxiety', 'aggressiveness', 'precio', 'clearSignature', 'submitButton', 'clearFormBtn',
+    'setCurrentTimeBtn'
+];
+
+function setFieldsLocked(locked) {
+    LOCKABLE_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = locked;
+    });
+    // El canvas de firma también se bloquea visualmente
+    if (canvas) {
+        canvas.style.pointerEvents = locked ? 'none' : 'auto';
+        canvas.style.opacity = locked ? '0.4' : '1';
+    }
+}
+
+function setPhoneLoading(isLoading) {
+    const phoneInput = document.getElementById('ownerPhone');
+    const statusEl = document.getElementById('telefonoStatus');
+    if (!phoneInput) return;
+
+    if (isLoading) {
+        phoneInput.disabled = true;
+        if (statusEl) {
+            statusEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Buscando...';
+            statusEl.classList.remove('text-danger', 'text-success');
+            statusEl.classList.add('text-secondary');
+            statusEl.style.display = 'block';
+        }
+    } else {
+        phoneInput.disabled = false;
+    }
+}
+
 async function fetchConsentimientoByTelefono(telefono) {
     if (!telefono) return null;
 
@@ -173,7 +222,9 @@ async function fetchConsentimientoByTelefono(telefono) {
             return null;
         }
 
-        return await response.json();
+        const data = await response.json();
+        // La API retorna un array; tomamos el primer elemento
+        return Array.isArray(data) ? (data[0] ?? null) : data;
     } catch (error) {
         console.error('Error fetching consentimiento by telefono:', error);
         return null;
@@ -236,23 +287,34 @@ function attachTelefonoLookup() {
     const phoneInput = document.getElementById('ownerPhone');
     if (!phoneInput) return;
 
-    const clearStatus = () => setTelefonoStatus('');
-    phoneInput.addEventListener('input', clearStatus);
+    phoneInput.addEventListener('input', () => {
+        setTelefonoStatus('');
+        // Vuelve a bloquear si el usuario modifica el teléfono después de una búsqueda
+        setFieldsLocked(true);
+    });
 
     phoneInput.addEventListener('blur', async (e) => {
         const telefono = e.target.value.trim();
         if (!telefono) {
             setTelefonoStatus('');
+            setFieldsLocked(true);
             return;
         }
 
+        setPhoneLoading(true);
+        setFieldsLocked(true);
+
         const record = await fetchConsentimientoByTelefono(telefono);
+
+        setPhoneLoading(false);
+        setFieldsLocked(false);
+
         if (record) {
             populateFormFromConsentimiento(record);
             setCurrentDateTime();
-            // setTelefonoStatus('Registro encontrado.', false);
+            setTelefonoStatus('✓ Datos cargados del registro anterior.', false);
         } else {
-            setTelefonoStatus('No existe un consentimiento registrado para este número de teléfono.');
+            setTelefonoStatus('Sin registro previo. Complete los campos manualmente.');
         }
     });
 }
@@ -335,7 +397,9 @@ function resetForm() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
         setDefaultDateTime();
-        
+        setTelefonoStatus('');
+        setFieldsLocked(true);  // Volver a bloquear campos al limpiar
+
         // Limpiar inputs que no son del form directamente si es necesario o resetear estado visual
         const otherInput = document.getElementById("otherBreedInput");
         if(otherInput) otherInput.style.display = "none";
@@ -345,6 +409,7 @@ function resetForm() {
 // Inicializar listeners
 document.addEventListener('DOMContentLoaded', () => {
     setDefaultDateTime();
+    setFieldsLocked(true);  // Bloquear todo excepto teléfono al iniciar
     attachTelefonoLookup();
 
     const setTimeBtn = document.getElementById('setCurrentTimeBtn');
@@ -442,14 +507,14 @@ async function saveConsentimiento(data) {
                 validationMessage = String(errorBody);
             }
 
-            setSubmitError(validationMessage || 'Error guardando el consentimiento.');
+            setSubmitMessage(validationMessage || 'Error guardando el consentimiento.', 'error');
             return null;
         }
 
         return await response.json();
     } catch (error) {
         console.error('Error guardando consentimiento:', error);
-        setSubmitError('Error guardando el consentimiento. Revisa la consola para más detalles.');
+        setSubmitMessage('Error guardando el consentimiento. Revisa la consola para más detalles.', 'error');
         return null;
     }
 }
@@ -473,6 +538,10 @@ function fillPdfContent(data) {
     if (signatureImg && data.firma && data.firma.startsWith('data:image/')) {
         signatureImg.src = data.firma;
     }
+}
+
+function showSuccess(message) {
+    setSubmitMessage(message, 'success');
 }
 
 function waitForImageLoad(img) {
@@ -517,7 +586,7 @@ function getConsentimientoPdfFileName(data) {
 document.getElementById('consentForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    clearSubmitError();
+    clearSubmitMessage();
     setSubmitLoading(true);
 
     let payload;
@@ -530,7 +599,7 @@ document.getElementById('consentForm').addEventListener('submit', async function
             return;
         }
 
-        setSubmitError('Consentimiento guardado correctamente.');
+        showSuccess('Consentimiento guardado correctamente.');
         fillPdfContent(payload);
 
         const pdfContent = document.getElementById('pdfContent');
@@ -558,7 +627,7 @@ document.getElementById('consentForm').addEventListener('submit', async function
             pdf.save(fileName);
         } catch (error) {
             console.error('Error generando PDF:', error);
-            setSubmitError('Ocurrió un error al generar el PDF.');
+            setSubmitMessage('Ocurrió un error al generar el PDF.', 'error');
         } finally {
             const pdfContent = document.getElementById('pdfContent');
             if (pdfContent) pdfContent.style.display = 'none';
@@ -566,13 +635,13 @@ document.getElementById('consentForm').addEventListener('submit', async function
 
     } catch (err) {
         console.error('Error en el proceso de guardado/generación:', err);
-        setSubmitError('Ocurrió un error. Revisa la consola para más detalles.');
+        setSubmitMessage('Ocurrió un error. Revisa la consola para más detalles.', 'error');
     } finally {
         setSubmitLoading(false);
     }
 });
 
-const footerClearBtn = document.getElementById('clearFooterError');
+const footerClearBtn = document.getElementById('clearFooterMessage');
 if (footerClearBtn) {
-    footerClearBtn.addEventListener('click', clearSubmitError);
+    footerClearBtn.addEventListener('click', clearSubmitMessage);
 }

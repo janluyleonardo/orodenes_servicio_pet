@@ -12,7 +12,7 @@
 </head>
 
 <body>
-    <div class="container mt-4">
+    <div class="container mt-4 mb-3">
         <div class="row mb-3 align-items-center">
             <div class="col-md-12">
                 <div class="d-flex align-items-center justify-content-start gap-3">
@@ -24,7 +24,7 @@
                 </div>
             </div>
         </div>
-        <form id="consentForm">
+        <form id="consentForm" class="mb-3">
             <div class="row">
                 <div class="col-md-3">
                     <label for="fecha" class="form-label">Fecha</label>
@@ -191,13 +191,13 @@
 
             <button type="submit" class="btn btn-primary" id="submitButton">Generar PDF</button>
             <button type="button" class="btn btn-danger ms-2" id="clearFormBtn">Limpiar Formulario</button>
-            <div id="submitError" class="text-danger mt-2" style="display: none;" role="alert" aria-live="assertive"></div>
+            <div id="submitMessage" class="text-danger mt-2" style="display: none;" role="alert" aria-live="assertive"></div>
         </form>
     </div>
-    <footer id="appErrorFooter" class="fixed-bottom bg-danger text-white py-2 px-3 d-none" aria-live="assertive">
+    <footer id="appMessageFooter" class="fixed-bottom bg-danger text-white py-2 px-3 d-none" aria-live="assertive">
         <div class="d-flex justify-content-between align-items-center">
-            <span id="footerErrorMessage" class="fs-6"></span>
-            <button type="button" class="btn btn-sm btn-light text-danger" id="clearFooterError">Cerrar</button>
+            <span id="footerMessageText" class="fs-6"></span>
+            <button type="button" class="btn btn-sm btn-light text-danger" id="clearFooterMessage">Cerrar</button>
         </div>
     </footer>
 
@@ -308,9 +308,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <script src="js/app.js?v=20260806-2"></script>
-    <script src="js/validacion_otro.js?v=20260806-2"></script>
-    <script src="js/auto-complete-name.js?v=20260806-2"></script>
+    <script src="js/app.js?v=20260806-3"></script>
+    <script src="js/validacion_otro.js?v=20260806-3"></script>
+    <script src="js/auto-complete-name.js?v=20260806-3"></script>
 </body>
 
 </html>
