@@ -10,6 +10,30 @@ body {
     min-height: 100vh;
 }
 
+/* Marca de agua del logo — solo en la pantalla, nunca en el PDF */
+body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    width: 420px;
+    height: 420px;
+    background-image: url('../images/Logo_redondo.png');
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Asegura que el contenido quede por encima de la marca de agua */
+.container {
+    position: relative;
+    z-index: 1;
+}
+
 #pdfContent {
     position: relative;
     background-color: #ffffff;
