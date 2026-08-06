@@ -361,22 +361,32 @@ function buildConsentimientoPayload() {
 
     if (document.getElementById('anxiety')?.checked) antecedentesLista.push('Ansiedad');
     if (document.getElementById('aggressiveness')?.checked) antecedentesLista.push('Agresividad');
+    const safeVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return '';
+        if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+        return (el.value || '').toString();
+    };
+
+    const cedulaVal = safeVal('cedula');
+    const petBreedVal = safeVal('petBreed');
+    const otherBreedVal = petBreedVal === 'Otro' ? safeVal('otherBreedInput') : '';
 
     return {
-        cedula: document.getElementById('cedula').value.trim(),
-        fecha: document.getElementById('fecha').value,
-        hora: document.getElementById('hora').value,
+        cedula: (cedulaVal || '').toString().trim(),
+        fecha: safeVal('fecha'),
+        hora: safeVal('hora'),
         precio: precioSanitizado,
-        nombre_mascota: document.getElementById('petName').value,
-        raza: document.getElementById('petBreed').value,
-        otro_raza: document.getElementById('petBreed').value === 'Otro' ? document.getElementById('otherBreedInput').value : '',
-        edad: document.getElementById('petAge').value,
-        telefono: document.getElementById('ownerPhone').value,
-        nombre_dueno: document.getElementById('ownerName').value,
-        domicilio: document.getElementById('ownerAddress').value,
-        correo: document.getElementById('ownerEmail').value,
-        enfermedades: document.getElementById('petDiseases').value,
-        observaciones: document.getElementById('petObservations').value,
+        nombre_mascota: safeVal('petName'),
+        raza: petBreedVal,
+        otro_raza: otherBreedVal,
+        edad: safeVal('petAge'),
+        telefono: safeVal('ownerPhone'),
+        nombre_dueno: safeVal('ownerName'),
+        domicilio: safeVal('ownerAddress'),
+        correo: safeVal('ownerEmail'),
+        enfermedades: safeVal('petDiseases'),
+        observaciones: safeVal('petObservations'),
         antecedentes: antecedentesLista.join(', '),
         ansiedad: document.getElementById('anxiety')?.checked ?? false,
         agresividad: document.getElementById('aggressiveness')?.checked ?? false,
@@ -502,46 +512,54 @@ document.getElementById('consentForm').addEventListener('submit', async function
     clearSubmitError();
     setSubmitLoading(true);
 
-    const payload = buildConsentimientoPayload();
-    payload.hora = normalizeTimeValue(payload.hora);
+    let payload;
+    try {
+        payload = buildConsentimientoPayload();
+        payload.hora = normalizeTimeValue(payload.hora);
 
-    const savedRecord = await saveConsentimiento(payload);
-    setSubmitLoading(false);
+        const savedRecord = await saveConsentimiento(payload);
+        if (!savedRecord) {
+            return;
+        }
 
-    if (!savedRecord) {
-        return;
+        setSubmitError('Consentimiento guardado correctamente.');
+        fillPdfContent(payload);
+
+        const pdfContent = document.getElementById('pdfContent');
+        if (pdfContent) pdfContent.style.display = 'block';
+        const signatureImg = document.getElementById('pdfSignature');
+
+        await waitForImageLoad(signatureImg);
+
+        try {
+            const canvasResult = await html2canvas(pdfContent, { scale: 2, logging: false, useCORS: true });
+            const imgData = canvasResult.toDataURL('image/png');
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: [216, 356] // Oficio
+            });
+            
+            const imgWidth = 216;
+            const imgHeight = (canvasResult.height * imgWidth) / canvasResult.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            const fileName = getConsentimientoPdfFileName(payload);
+            pdf.save(fileName);
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+            setSubmitError('Ocurrió un error al generar el PDF.');
+        } finally {
+            const pdfContent = document.getElementById('pdfContent');
+            if (pdfContent) pdfContent.style.display = 'none';
+        }
+
+    } catch (err) {
+        console.error('Error en el proceso de guardado/generación:', err);
+        setSubmitError('Ocurrió un error. Revisa la consola para más detalles.');
+    } finally {
+        setSubmitLoading(false);
     }
-
-    setSubmitError('Consentimiento guardado correctamente.');
-    fillPdfContent(payload);
-
-    const pdfContent = document.getElementById('pdfContent');
-    pdfContent.style.display = 'block';
-    const signatureImg = document.getElementById('pdfSignature');
-
-    await waitForImageLoad(signatureImg);
-
-    html2canvas(pdfContent, { scale: 2, logging: false, useCORS: true }).then(canvasResult => {
-        const imgData = canvasResult.toDataURL('image/png');
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: [216, 356] // Oficio
-        });
-        
-        const imgWidth = 216;
-        const imgHeight = (canvasResult.height * imgWidth) / canvasResult.width;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        const fileName = getConsentimientoPdfFileName(payload);
-        pdf.save(fileName);
-        
-        pdfContent.style.display = 'none';
-    }).catch(error => {
-        console.error('Error generando PDF:', error);
-        setSubmitError('Ocurrió un error al generar el PDF.');
-        pdfContent.style.display = 'none';
-    });
 });
