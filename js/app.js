@@ -267,10 +267,22 @@ function populateFormFromConsentimiento(data) {
     }
 
     if (data.firma && typeof data.firma === 'string' && data.firma.startsWith('data:image/')) {
+        // 1. Cargar en el img oculto del PDF preview
         const signatureImg = document.getElementById('pdfSignature');
         if (signatureImg) {
             signatureImg.src = data.firma;
         }
+
+        // 2. Pintar la firma guardada en el canvas visible para que el usuario
+        //    la vea y quede incluida correctamente al generar el PDF
+        const img = new Image();
+        img.onload = () => {
+            resizeCanvas();
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width / ratio, canvas.height / ratio);
+        };
+        img.src = data.firma;
     }
 }
 
