@@ -242,7 +242,8 @@ function populateFormFromConsentimiento(data) {
         raza: 'petBreed',
         otro_raza: 'otherBreedInput',
         edad: 'petAge',
-        telefono: 'ownerPhone',
+        // 'telefono' se omite: el campo ya tiene el valor que escribió el usuario
+        // y rellenarlo programáticamente dispararía el listener que re-bloquea el formulario
         nombre_dueno: 'ownerName',
         domicilio: 'ownerAddress',
         correo: 'ownerEmail',
