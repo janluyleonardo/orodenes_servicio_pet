@@ -471,6 +471,30 @@ function waitForImageLoad(img) {
     });
 }
 
+function sanitizePdfFileName(value) {
+    return String(value || '')
+        .trim()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9._-]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .toLowerCase();
+}
+
+function getConsentimientoPdfFileName(data) {
+    const parts = [
+        sanitizePdfFileName(data.cedula || document.getElementById('cedula')?.value || ''),
+        sanitizePdfFileName(data.nombre_mascota || document.getElementById('petName')?.value || ''),
+        sanitizePdfFileName(data.nombre_dueno || document.getElementById('ownerName')?.value || '')
+    ].filter(Boolean);
+
+    if (parts.length === 0) {
+        return 'consentimiento.pdf';
+    }
+
+    return `consentimiento_${parts.join('_')}.pdf`;
+}
+
 document.getElementById('consentForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -510,7 +534,8 @@ document.getElementById('consentForm').addEventListener('submit', async function
         const imgHeight = (canvasResult.height * imgWidth) / canvasResult.width;
 
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        pdf.save('consentimiento_informado.pdf');
+        const fileName = getConsentimientoPdfFileName(payload);
+        pdf.save(fileName);
         
         pdfContent.style.display = 'none';
     }).catch(error => {
