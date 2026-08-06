@@ -26,18 +26,18 @@
         </div>
         <form id="consentForm">
             <div class="row">
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="fecha" class="form-label">Fecha</label>
                     <input type="date" class="form-control" id="fecha" name="fecha" required readonly>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="hora" class="form-label">Hora</label>
                     <div class="input-group mb-3">
                         <input type="time" class="form-control" id="hora" name="hora" required readonly>
                         <button type="button" class="btn btn-outline-secondary" id="setCurrentTimeBtn">Ahora</button>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="precio" class="form-label">precio</label>
                     <div class="input-group mb-3">
                         <span class="input-group-text">$</span>
@@ -50,19 +50,19 @@
             <div class="row">
                 <label class="form-label">DATOS GENERALES</label>
                 <hr>
-                <div class="col-md-4">
+                <!-- <div class="col-md-4">
                     <label for="cedula" class="form-label">Cédula del dueño (opcional)</label>
                     <input type="number" class="form-control" id="cedula" name="cedula">
+                </div> -->
+                <div class="col-md-4">
+                    <label class="form-label">Teléfono <strong>(úsese para búsqueda)</strong> </label>
+                    <input type="tel" class="form-control" id="ownerPhone" required>
+                    <div id="telefonoStatus" class="form-text text-danger" style="display:none;"></div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Nombre del dueño</label>
                     <input type="text" class="form-control" id="ownerName" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Teléfono (úsese para búsqueda)</label>
-                    <input type="tel" class="form-control" id="ownerPhone" required>
-                    <div id="telefonoStatus" class="form-text text-danger" style="display:none;"></div>
-                </div>
+                </div>                
                 <div class="col-md-4">
                     <label class="form-label">Nombre de la mascota</label>
                     <input type="text" class="form-control" id="petName" required>
@@ -194,6 +194,12 @@
             <div id="submitError" class="text-danger mt-2" style="display: none;" role="alert" aria-live="assertive"></div>
         </form>
     </div>
+    <footer id="appErrorFooter" class="fixed-bottom bg-danger text-white py-2 px-3 d-none" aria-live="assertive">
+        <div class="d-flex justify-content-between align-items-center">
+            <span id="footerErrorMessage" class="fs-6"></span>
+            <button type="button" class="btn btn-sm btn-light text-danger" id="clearFooterError">Cerrar</button>
+        </div>
+    </footer>
 
     <!-- oculto Codigo de pdf ya con datos -->
     <!-- <div id="pdfContent" style="width: 600px; padding: 20px; font-family: Arial; position: relative;"> -->

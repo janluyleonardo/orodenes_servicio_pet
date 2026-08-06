@@ -82,3 +82,12 @@ canvas {
         font-size: 0.82rem;
     }
 }
+
+#appErrorFooter {
+    z-index: 1050;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+#appErrorFooter button {
+    min-width: 80px;
+}

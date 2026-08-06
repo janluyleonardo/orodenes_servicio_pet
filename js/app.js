@@ -16,14 +16,22 @@ function getCanvasPoint(event) {
 
 function setSubmitError(message) {
     const errorContainer = document.getElementById('submitError');
-    if (!errorContainer) return;
+    const footer = document.getElementById('appErrorFooter');
+    const footerMessage = document.getElementById('footerErrorMessage');
+    if (!errorContainer || !footer || !footerMessage) return;
+
     if (!message) {
         errorContainer.style.display = 'none';
         errorContainer.textContent = '';
+        footer.classList.add('d-none');
+        footerMessage.textContent = '';
         return;
     }
+
     errorContainer.textContent = message;
     errorContainer.style.display = 'block';
+    footerMessage.textContent = message;
+    footer.classList.remove('d-none');
 }
 
 function clearSubmitError() {
@@ -563,3 +571,8 @@ document.getElementById('consentForm').addEventListener('submit', async function
         setSubmitLoading(false);
     }
 });
+
+const footerClearBtn = document.getElementById('clearFooterError');
+if (footerClearBtn) {
+    footerClearBtn.addEventListener('click', clearSubmitError);
+}
