@@ -144,11 +144,12 @@ function saveFormData() {
 const API_BASE_PATH = '/consentimientos-back/public/api/consentimientos';
 const API_BASE_URL = `${window.location.origin}${API_BASE_PATH}`;
 
-async function fetchConsentimientoByCedula(cedula) {
-    if (!cedula) return null;
+async function fetchConsentimientoByTelefono(telefono) {
+    if (!telefono) return null;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/${encodeURIComponent(cedula)}`, {
+        const endpoint = `${API_BASE_URL}/telefono/${encodeURIComponent(telefono)}`;
+        const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json'
@@ -160,13 +161,13 @@ async function fetchConsentimientoByCedula(cedula) {
             if (response.status === 404) {
                 return null;
             }
-            console.error('Backend error fetching consentimiento:', response.status, response.statusText);
+            console.error('Backend error fetching consentimiento by telefono:', response.status, response.statusText);
             return null;
         }
 
         return await response.json();
     } catch (error) {
-        console.error('Error fetching consentimiento by cedula:', error);
+        console.error('Error fetching consentimiento by telefono:', error);
         return null;
     }
 }
@@ -214,8 +215,8 @@ function populateFormFromConsentimiento(data) {
     }
 }
 
-function setCedulaStatus(message, isError = true) {
-    const status = document.getElementById('cedulaStatus');
+function setTelefonoStatus(message, isError = true) {
+    const status = document.getElementById('telefonoStatus');
     if (!status) return;
     status.textContent = message || '';
     status.style.display = message ? 'block' : 'none';
@@ -223,27 +224,27 @@ function setCedulaStatus(message, isError = true) {
     status.classList.toggle('text-success', !isError);
 }
 
-function attachCedulaLookup() {
-    const cedulaInput = document.getElementById('cedula');
-    if (!cedulaInput) return;
+function attachTelefonoLookup() {
+    const phoneInput = document.getElementById('ownerPhone');
+    if (!phoneInput) return;
 
-    const clearStatus = () => setCedulaStatus('');
-    cedulaInput.addEventListener('input', clearStatus);
+    const clearStatus = () => setTelefonoStatus('');
+    phoneInput.addEventListener('input', clearStatus);
 
-    cedulaInput.addEventListener('blur', async (e) => {
-        const cedula = e.target.value.trim();
-        if (!cedula) {
-            setCedulaStatus('');
+    phoneInput.addEventListener('blur', async (e) => {
+        const telefono = e.target.value.trim();
+        if (!telefono) {
+            setTelefonoStatus('');
             return;
         }
 
-        const record = await fetchConsentimientoByCedula(cedula);
+        const record = await fetchConsentimientoByTelefono(telefono);
         if (record) {
             populateFormFromConsentimiento(record);
             setCurrentDateTime();
-            // setCedulaStatus('Registro encontrado.', false);
+            // setTelefonoStatus('Registro encontrado.', false);
         } else {
-            setCedulaStatus('No existe un consentimiento registrado para esta cédula.');
+            setTelefonoStatus('No existe un consentimiento registrado para este número de teléfono.');
         }
     });
 }
@@ -336,7 +337,7 @@ function resetForm() {
 // Inicializar listeners
 document.addEventListener('DOMContentLoaded', () => {
     setDefaultDateTime();
-    attachCedulaLookup();
+    attachTelefonoLookup();
 
     const setTimeBtn = document.getElementById('setCurrentTimeBtn');
     if (setTimeBtn) {

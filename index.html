@@ -51,17 +51,17 @@
                 <label class="form-label">DATOS GENERALES</label>
                 <hr>
                 <div class="col-md-4">
-                    <label for="cedula" class="form-label">Cédula del dueño</label>
-                    <input type="number" class="form-control" id="cedula" name="cedula" required>
-                    <div id="cedulaStatus" class="form-text text-danger" style="display:none;"></div>
+                    <label for="cedula" class="form-label">Cédula del dueño (opcional)</label>
+                    <input type="number" class="form-control" id="cedula" name="cedula">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Nombre del dueño</label>
                     <input type="text" class="form-control" id="ownerName" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Teléfono</label>
+                    <label class="form-label">Teléfono (úsese para búsqueda)</label>
                     <input type="tel" class="form-control" id="ownerPhone" required>
+                    <div id="telefonoStatus" class="form-text text-danger" style="display:none;"></div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Nombre de la mascota</label>
