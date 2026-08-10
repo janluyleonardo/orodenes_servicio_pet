@@ -25,27 +25,6 @@
             </div>
         </div>
         <form id="consentForm" class="mb-3">
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="fecha" class="form-label">Fecha</label>
-                    <input type="date" class="form-control" id="fecha" name="fecha" required readonly>
-                </div>
-                <div class="col-md-3">
-                    <label for="hora" class="form-label">Hora</label>
-                    <div class="input-group mb-3">
-                        <input type="time" class="form-control" id="hora" name="hora" required readonly>
-                        <button type="button" class="btn btn-outline-secondary" id="setCurrentTimeBtn">Ahora</button>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <label for="precio" class="form-label">precio</label>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text">$</span>
-                        <input type="text" class="form-control" id="precio" aria-label="Amount (to the nearest dollar)">
-                        <span class="input-group-text">.00</span>
-                    </div>
-                </div>
-            </div>
             <!-- Datos generales mascota-->
             <div class="row">
                 <label class="form-label">DATOS GENERALES</label>
@@ -93,6 +72,28 @@
                 <div class="col-md-6">
                     <label class="form-label">Correo</label>
                     <input type="email" class="form-control" id="ownerEmail" required>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input type="date" class="form-control" id="fecha" name="fecha" required readonly>
+                </div>
+                <div class="col-md-3">
+                    <label for="hora" class="form-label">Hora</label>
+                    <div class="input-group mb-3">
+                        <input type="time" class="form-control" id="hora" name="hora" required readonly>
+                        <button type="button" class="btn btn-outline-secondary" id="setCurrentTimeBtn">Ahora</button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="precio" class="form-label">precio</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">$</span>
+                        <input type="text" class="form-control" id="precio" aria-label="Amount (to the nearest dollar)">
+                        <span class="input-group-text">.00</span>
+                    </div>
                 </div>
             </div>
             <!-- ... (Agrega aquí todos los campos del PDF, como edad, dueño, teléfono, etc.) -->
