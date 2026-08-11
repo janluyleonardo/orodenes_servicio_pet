@@ -162,6 +162,55 @@ function saveFormData() {
 
 const API_BASE_PATH = '/consentimientos-back/public/api/consentimientos';
 const API_BASE_URL = `${window.location.origin}${API_BASE_PATH}`;
+const RAZAS_API_URL = `${window.location.origin}/consentimientos-back/public/api/razas`;
+
+async function loadRazas() {
+    const breedSelect = document.getElementById('petBreed');
+    if (!breedSelect) return false;
+
+    const selectedValue = breedSelect.value;
+
+    try {
+        const response = await fetch(RAZAS_API_URL, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        const razas = Array.isArray(responseData) ? responseData : responseData.data;
+        if (!Array.isArray(razas)) {
+            throw new Error('Formato de respuesta inválido');
+        }
+
+        breedSelect.replaceChildren(new Option('Selecciona una raza', '', true, false));
+
+        razas.forEach(raza => {
+            const nombre = typeof raza === 'string' ? raza : raza.nombre;
+            if (nombre) {
+                breedSelect.add(new Option(nombre, nombre));
+            }
+        });
+
+        breedSelect.add(new Option('Otro (especificar)', 'Otro'));
+
+        if (selectedValue && !Array.from(breedSelect.options).some(option => option.value === selectedValue)) {
+            breedSelect.add(new Option(selectedValue, selectedValue));
+        }
+
+        breedSelect.value = selectedValue;
+        breedSelect.dispatchEvent(new Event('change'));
+        return true;
+    } catch (error) {
+        console.error('Error cargando el catálogo de razas:', error);
+        setSubmitMessage('No se pudo cargar el catálogo de razas. Verifique la conexión con el servidor.', 'error');
+        return false;
+    }
+}
 
 // IDs de todos los campos que se bloquean hasta completar la búsqueda por teléfono
 const LOCKABLE_FIELDS = [
@@ -420,10 +469,11 @@ function resetForm() {
 }
 
 // Inicializar listeners
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     setDefaultDateTime();
     setFieldsLocked(true);  // Bloquear todo excepto teléfono al iniciar
     attachTelefonoLookup();
+    await loadRazas();
 
     const setTimeBtn = document.getElementById('setCurrentTimeBtn');
     if (setTimeBtn) {
