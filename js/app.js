@@ -142,6 +142,63 @@ document.getElementById('clearSignature').addEventListener('click', () => {
 });
 
 // --- PERSISTENCIA DE DATOS Y UTILIDADES ---
+let petPhotoDataUrl = '';
+
+function setPetPhotoPreview(dataUrl) {
+    const preview = document.getElementById('petPhotoPreview');
+    const pdfPreview = document.getElementById('pdfPetPhoto');
+
+    if (preview) {
+        if (dataUrl) {
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+        } else {
+            preview.removeAttribute('src');
+            preview.style.display = 'none';
+        }
+    }
+
+    if (pdfPreview) {
+        if (dataUrl) {
+            pdfPreview.src = dataUrl;
+            pdfPreview.style.display = 'block';
+        } else {
+            pdfPreview.removeAttribute('src');
+            pdfPreview.style.display = 'none';
+        }
+    }
+}
+
+function handlePetPhotoSelection(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+        setSubmitMessage('Solo puedes seleccionar archivos de imagen.', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : '';
+        petPhotoDataUrl = result;
+        setPetPhotoPreview(result);
+    };
+    reader.onerror = () => {
+        setSubmitMessage('No se pudo leer la imagen de la mascota.', 'error');
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPetPhoto() {
+    petPhotoDataUrl = '';
+    const input = document.getElementById('petPhotoInput');
+    if (input) input.value = '';
+    setPetPhotoPreview('');
+}
 
 // Guardar datos en localStorage
 function saveFormData() {
@@ -249,10 +306,10 @@ async function loadRazas() {
 
 // IDs de todos los campos que se bloquean hasta completar la búsqueda por teléfono
 const LOCKABLE_FIELDS = [
-    'ownerName', 'petName', 'petBreed', 'otherBreedInput', 'petAge',
+    'ownerName', 'petName', 'petBreed', 'otherBreedInput', 'petAge', 'petPhotoInput',
     'ownerAddress', 'ownerEmail', 'petDiseases', 'petObservations',
     'anxiety', 'aggressiveness', 'precio', 'clearSignature', 'submitButton', 'clearFormBtn',
-    'setCurrentTimeBtn'
+    'setCurrentTimeBtn', 'clearPetPhotoBtn'
 ];
 
 function setFieldsLocked(locked) {
@@ -307,8 +364,14 @@ async function fetchConsentimientoByTelefono(telefono) {
         }
 
         const data = await response.json();
-        // La API retorna un array; tomamos el primer elemento
-        return Array.isArray(data) ? (data[0] ?? null) : data;
+        const firstRecord = Array.isArray(data) ? (data[0] ?? null) : data;
+        if (!firstRecord) return null;
+
+        const recordData = firstRecord.data ?? firstRecord;
+        return {
+            ...recordData,
+            foto_mascota_url: firstRecord.foto_mascota_url || recordData.foto_mascota_url || null
+        };
     } catch (error) {
         console.error('Error fetching consentimiento by telefono:', error);
         return null;
@@ -349,6 +412,18 @@ function populateFormFromConsentimiento(data) {
         otherInput.style.display = 'block';
         otherInput.value = data.otro_raza;
         otherInput.required = true;
+    }
+
+    const petPhotoValue = data.foto_mascota_url || data.foto_mascota || data.petPhoto || data.pet_photo || data.foto || '';
+    if (typeof petPhotoValue === 'string' && (petPhotoValue.startsWith('data:image/') || petPhotoValue.startsWith('http://') || petPhotoValue.startsWith('https://'))) {
+        petPhotoDataUrl = petPhotoValue;
+        setPetPhotoPreview(petPhotoValue);
+    } else if (petPhotoValue) {
+        petPhotoDataUrl = petPhotoValue;
+        setPetPhotoPreview(petPhotoValue);
+    } else {
+        petPhotoDataUrl = '';
+        setPetPhotoPreview('');
     }
 
     if (data.firma && typeof data.firma === 'string' && data.firma.startsWith('data:image/')) {
@@ -493,6 +568,7 @@ function resetForm() {
         document.getElementById('consentForm').reset();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
+        clearPetPhoto();
         setDefaultDateTime();
         setTelefonoStatus('');
         setFieldsLocked(true);  // Volver a bloquear campos al limpiar
@@ -513,6 +589,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const setTimeBtn = document.getElementById('setCurrentTimeBtn');
     if (setTimeBtn) {
         setTimeBtn.addEventListener('click', setCurrentTime);
+    }
+
+    const petPhotoInput = document.getElementById('petPhotoInput');
+    if (petPhotoInput) {
+        petPhotoInput.addEventListener('change', handlePetPhotoSelection);
+    }
+
+    const clearPetPhotoBtn = document.getElementById('clearPetPhotoBtn');
+    if (clearPetPhotoBtn) {
+        clearPetPhotoBtn.addEventListener('click', clearPetPhoto);
     }
 
     // Botón de limpiar formulario
@@ -561,20 +647,41 @@ function buildConsentimientoPayload() {
         antecedentes: antecedentesLista.join(', '),
         ansiedad: document.getElementById('anxiety')?.checked ?? false,
         agresividad: document.getElementById('aggressiveness')?.checked ?? false,
+        foto_mascota: petPhotoDataUrl,
         firma: canvas.toDataURL('image/png')
     };
 }
 
 async function saveConsentimiento(data) {
     try {
+        const formData = new FormData();
+        const photoInput = document.getElementById('petPhotoInput');
+        const file = photoInput && photoInput.files ? photoInput.files[0] : null;
+
+        Object.entries(data).forEach(([key, value]) => {
+            if (value === undefined || value === null || key === 'foto_mascota') {
+                return;
+            }
+
+            if (typeof value === 'boolean') {
+                formData.append(key, value ? '1' : '0');
+                return;
+            }
+
+            formData.append(key, value);
+        });
+
+        if (file) {
+            formData.append('foto_mascota', file);
+        }
+
         const response = await fetch(API_BASE_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             cache: 'no-store',
-            body: JSON.stringify(data)
+            body: formData
         });
 
         if (!response.ok) {
@@ -631,6 +738,18 @@ function fillPdfContent(data) {
     document.getElementById('pdfOwnerAddress').textContent = data.domicilio || '';
     document.getElementById('pdfOwnerEmail').textContent = data.correo || '';
     document.getElementById('pdfOwnerNameDisplay').textContent = data.nombre_dueno || '';
+
+    const petPhotoValue = data.foto_mascota_url || data.foto_mascota || data.petPhoto || data.pet_photo || data.foto || '';
+    const petPhotoImg = document.getElementById('pdfPetPhoto');
+    if (petPhotoImg) {
+        if (typeof petPhotoValue === 'string' && (petPhotoValue.startsWith('data:image/') || petPhotoValue.startsWith('http://') || petPhotoValue.startsWith('https://'))) {
+            petPhotoImg.src = petPhotoValue;
+            petPhotoImg.style.display = 'block';
+        } else {
+            petPhotoImg.removeAttribute('src');
+            petPhotoImg.style.display = 'none';
+        }
+    }
 
     const signatureImg = document.getElementById('pdfSignature');
     if (signatureImg && data.firma && data.firma.startsWith('data:image/')) {
