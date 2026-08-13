@@ -160,21 +160,31 @@ function saveFormData() {
     localStorage.setItem('petShopFormData', JSON.stringify(formData));
 }
 
-// Detectar entorno y construir URL del backend
-const getBackendOrigin = () => {
+// Detectar entorno y construir URLs del backend
+const getBackendConfig = () => {
     const hostname = window.location.hostname;
-    // Si es localhost o 127.0.0.1, usar el mismo origen (desarrollo local)
+    
+    // Ambiente de desarrollo local
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return window.location.origin;
+        return {
+            origin: window.location.origin,
+            apiPath: '/consentimientos-back/public/api/consentimientos',
+            razasPath: '/consentimientos-back/public/api/razas'
+        };
     }
-    // Si es producción, usar el dominio 'api'
-    return 'http://api';
+    
+    // Ambiente de producción con dominio personalizado
+    return {
+        origin: 'http://api.universalpet.co',
+        apiPath: '/api/consentimientos',
+        razasPath: '/api/razas'
+    };
 };
 
-const BACKEND_ORIGIN = getBackendOrigin();
-const API_BASE_PATH = '/consentimientos-back/public/api/consentimientos';
-const API_BASE_URL = `${BACKEND_ORIGIN}${API_BASE_PATH}`;
-const RAZAS_API_URL = `${BACKEND_ORIGIN}/consentimientos-back/public/api/razas`;
+const BACKEND_CONFIG = getBackendConfig();
+const BACKEND_ORIGIN = BACKEND_CONFIG.origin;
+const API_BASE_URL = `${BACKEND_ORIGIN}${BACKEND_CONFIG.apiPath}`;
+const RAZAS_API_URL = `${BACKEND_ORIGIN}${BACKEND_CONFIG.razasPath}`;
 
 async function loadRazas() {
     const breedSelect = document.getElementById('petBreed');
