@@ -160,9 +160,21 @@ function saveFormData() {
     localStorage.setItem('petShopFormData', JSON.stringify(formData));
 }
 
+// Detectar entorno y construir URL del backend
+const getBackendOrigin = () => {
+    const hostname = window.location.hostname;
+    // Si es localhost o 127.0.0.1, usar el mismo origen (desarrollo local)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return window.location.origin;
+    }
+    // Si es producción, usar el dominio 'api'
+    return 'http://api';
+};
+
+const BACKEND_ORIGIN = getBackendOrigin();
 const API_BASE_PATH = '/consentimientos-back/public/api/consentimientos';
-const API_BASE_URL = `${window.location.origin}${API_BASE_PATH}`;
-const RAZAS_API_URL = `${window.location.origin}/consentimientos-back/public/api/razas`;
+const API_BASE_URL = `${BACKEND_ORIGIN}${API_BASE_PATH}`;
+const RAZAS_API_URL = `${BACKEND_ORIGIN}/consentimientos-back/public/api/razas`;
 
 async function loadRazas() {
     const breedSelect = document.getElementById('petBreed');
