@@ -163,8 +163,9 @@ function saveFormData() {
 // Detectar entorno y construir URLs del backend
 const getBackendConfig = () => {
     const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
     
-    // Ambiente de desarrollo local
+    // Ambiente de desarrollo local (localhost o 127.0.0.1)
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return {
             origin: window.location.origin,
@@ -173,7 +174,19 @@ const getBackendConfig = () => {
         };
     }
     
-    // Ambiente de producción con dominio personalizado
+    // Si se accede por IP (ej: 192.168.1.92), usar la misma IP para el backend
+    // Patrón para detectar IPv4: XXX.XXX.XXX.XXX
+    const isIPAddress = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
+    if (isIPAddress) {
+        return {
+            origin: `${protocol}//${hostname}`,
+            apiPath: '/consentimientos-back/public/api/consentimientos',
+            razasPath: '/consentimientos-back/public/api/razas'
+        };
+    }
+    
+    // Si se accede por dominio personalizado (ej: www.universalpet.co)
+    // usar el dominio del backend con rutas cortas
     return {
         origin: 'http://api.universalpet.co',
         apiPath: '/api/consentimientos',

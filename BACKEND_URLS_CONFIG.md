@@ -15,24 +15,41 @@ Resultado: La lista de razas no cargaba y no se precargaban los datos anteriores
 
 ## Solución Implementada
 
-### Cambio Anterior (v1.1.1)
-En `js/app.js` (Líneas 163-176):
+### Versión 1.1.1
 ```javascript
 const getBackendOrigin = () => {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return window.location.origin;
     }
-    return 'http://api';  // ❌ Dominio incorrecto
+    return 'http://api';  // ❌ No funciona con IP
 };
 ```
 
-### Cambio Actual (v1.1.2) ✅
+### Versión 1.1.2
 ```javascript
 const getBackendConfig = () => {
     const hostname = window.location.hostname;
     
-    // Ambiente de desarrollo local
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return { /* rutas largas */ };
+    }
+    
+    return {
+        origin: 'http://api.universalpet.co',  // ❌ No funciona con IP
+        apiPath: '/api/consentimientos',
+        razasPath: '/api/razas'
+    };
+};
+```
+
+### Versión 1.1.3 (Actual) ✅
+```javascript
+const getBackendConfig = () => {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // Caso 1: Desarrollo local
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return {
             origin: window.location.origin,
@@ -41,23 +58,28 @@ const getBackendConfig = () => {
         };
     }
     
-    // Ambiente de producción con dominio personalizado
+    // Caso 2: Acceso por IP desde tablet ✅ NUEVO
+    const isIPAddress = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
+    if (isIPAddress) {
+        return {
+            origin: `${protocol}//${hostname}`,  // ✅ Usa misma IP
+            apiPath: '/consentimientos-back/public/api/consentimientos',
+            razasPath: '/consentimientos-back/public/api/razas'
+        };
+    }
+    
+    // Caso 3: Acceso por dominio
     return {
         origin: 'http://api.universalpet.co',
         apiPath: '/api/consentimientos',
         razasPath: '/api/razas'
     };
 };
-
-const BACKEND_CONFIG = getBackendConfig();
-const BACKEND_ORIGIN = BACKEND_CONFIG.origin;
-const API_BASE_URL = `${BACKEND_ORIGIN}${BACKEND_CONFIG.apiPath}`;
-const RAZAS_API_URL = `${BACKEND_ORIGIN}${BACKEND_CONFIG.razasPath}`;
 ```
 
 ## Cómo Funciona
 
-### En Desarrollo Local (v1.1.0, v1.1.1, v1.1.2)
+### En Desarrollo Local (v1.1.0, 1.1.1, 1.1.2, 1.1.3)
 ```
 Usuario accede a: http://localhost/consentimientos/
 window.location.hostname = "localhost"
@@ -66,36 +88,39 @@ RAZAS_API_URL = "http://localhost/consentimientos-back/public/api/razas"
 ✅ Funciona correctamente
 ```
 
-### En Producción v1.1.1 (Versión Anterior)
+### En Tablet con IP (v1.1.3 NUEVO) ✅
 ```
-Usuario accede a: http://www.universalpet.co/
-BACKEND_ORIGIN = "http://api"
-RAZAS_API_URL = "http://api/consentimientos-back/public/api/razas"
-⚠️ Funcionaba pero con rutas largas
+Usuario accede a: http://192.168.1.92/consentimientos/
+window.location.hostname = "192.168.1.92"
+Se detecta como IP → isIPAddress = true
+BACKEND_ORIGIN = "http://192.168.1.92"
+RAZAS_API_URL = "http://192.168.1.92/consentimientos-back/public/api/razas"
+✅ Funciona correctamente (SOLUCIONADO en v1.1.3)
 ```
 
-### En Producción v1.1.2 (Versión Actual) ✅
+### En Computador con Dominio (v1.1.2, 1.1.3)
 ```
 Usuario accede a: http://www.universalpet.co/
+window.location.hostname = "www.universalpet.co"
+Se detecta como Dominio (no es IP, no es localhost)
 BACKEND_ORIGIN = "http://api.universalpet.co"
 RAZAS_API_URL = "http://api.universalpet.co/api/razas"
-API_BASE_URL = "http://api.universalpet.co/api/consentimientos"
-✅ Funciona con rutas cortas y dominio completo
+✅ Funciona correctamente
 ```
 
 ## URLs Afectadas
 
-### En Desarrollo Local (Igual en v1.1.0, 1.1.1, 1.1.2)
+### En Desarrollo Local (Igual en v1.1.0, 1.1.1, 1.1.2, 1.1.3)
 1. **Cargar razas**: `http://localhost/consentimientos-back/public/api/razas`
 2. **Consultar por teléfono**: `http://localhost/consentimientos-back/public/api/consentimientos/telefono/{telefono}`
 3. **Guardar consentimiento**: `http://localhost/consentimientos-back/public/api/consentimientos` (POST)
 
-### En Producción (v1.1.1)
-1. **Cargar razas**: `http://api/consentimientos-back/public/api/razas`
-2. **Consultar por teléfono**: `http://api/consentimientos-back/public/api/consentimientos/telefono/{telefono}`
-3. **Guardar consentimiento**: `http://api/consentimientos-back/public/api/consentimientos` (POST)
+### En Tablet con IP (v1.1.3) ✅
+1. **Cargar razas**: `http://192.168.1.92/consentimientos-back/public/api/razas`
+2. **Consultar por teléfono**: `http://192.168.1.92/consentimientos-back/public/api/consentimientos/telefono/{telefono}`
+3. **Guardar consentimiento**: `http://192.168.1.92/consentimientos-back/public/api/consentimientos` (POST)
 
-### En Producción (v1.1.2) ✅ ACTUAL
+### En Producción con Dominio (v1.1.2, 1.1.3)
 1. **Cargar razas**: `http://api.universalpet.co/api/razas`
 2. **Consultar por teléfono**: `http://api.universalpet.co/api/consentimientos/telefono/{telefono}`
 3. **Guardar consentimiento**: `http://api.universalpet.co/api/consentimientos` (POST)
@@ -104,20 +129,32 @@ API_BASE_URL = "http://api.universalpet.co/api/consentimientos"
 - **Versión 1.1.0**: URLs hardcodeadas para localhost
 - **Versión 1.1.1**: Detección automática de ambiente (localhost vs api)
 - **Versión 1.1.2**: URLs configuradas para `api.universalpet.co` con rutas cortas
+- **Versión 1.1.3**: Soporte para acceso por IP desde tablet (192.168.1.92)
 - **Fecha**: 2026-08-13
 
-## Pasos para Verificar en Producción (v1.1.2)
+## Pasos para Verificar
 
-1. Accede a `http://www.universalpet.co` desde la tablet del cliente
+### En Tablet con IP (v1.1.3)
+1. Accede a `http://192.168.1.92/consentimientos` desde la tablet
 2. Abre las DevTools (F12)
-3. Ve a la pestaña **Console**
-4. Verifica que veas: `Versión: 1.1.2`
-5. Ve a la pestaña **Network**
+3. Ve a **Console**
+4. Verifica que veas: `Versión: 1.1.3`
+5. Ve a **Network**
 6. Recarga la página (F5)
-7. Busca las llamadas a las APIs:
+7. Busca las llamadas a `/consentimientos-back/public/api/razas`
+   - ✅ Debe apuntar a `http://192.168.1.92/consentimientos-back/public/api/razas`
+   - ✅ Debe mostrar estado 200
+
+### En Computador con Dominio Personalizado (v1.1.2, 1.1.3)
+1. Accede a `http://www.universalpet.co` desde la computadora del cliente
+2. Abre las DevTools (F12)
+3. Ve a **Console**
+4. Verifica que veas: `Versión: 1.1.3` o `1.1.2`
+5. Ve a **Network**
+6. Recarga la página (F5)
+7. Busca las llamadas a `/api/razas`
    - ✅ Debe apuntar a `http://api.universalpet.co/api/razas`
-   - ✅ Debe apuntar a `http://api.universalpet.co/api/consentimientos` (POST)
-   - ✅ Las respuestas deben mostrar estado 200
+   - ✅ Debe mostrar estado 200
 
 ## Configuración del VirtualHost del Cliente
 
@@ -147,18 +184,31 @@ Para que funcione correctamente, el cliente debe tener configurado en XAMPP:
 
 ## Si Sigue Sin Funcionar
 
-1. **Verificar versión**: Mira la esquina superior derecha - debe mostrar `v1.1.2`
-2. **Limpiar caché del cliente**: Ctrl+Shift+Del → Eliminar todos los datos
-3. **Recarga dura**: Ctrl+F5
-4. **Verificar DevTools**: F12 → Console → Busca errores de red
-5. **Verificar VirtualHost**: 
+### Para la Tablet (IP 192.168.1.92)
+1. **Verificar versión**: Debe mostrar `v1.1.3` en esquina superior derecha
+2. **Recarga dura**: Ctrl+F5 (o en tablet: deslizar hacia abajo en Chrome y tocar recarga)
+3. **Limpiar caché**: Ctrl+Shift+Del → Eliminar todos los datos
+4. **Verificar DevTools** (F12):
+   - Console: Busca errores en rojo
+   - Network: Verifica que las URLs apunten a `192.168.1.92`
+5. **Probar manualmente**: 
+   - Accede a `http://192.168.1.92/consentimientos-back/public/api/razas` desde el navegador
+   - Debe retornar un JSON con las razas
+6. **Verificar red**:
+   - La tablet y la computadora del cliente ¿están en la misma red?
+   - ¿Hay algún firewall bloqueando?
+
+### Para el Computador del Cliente (Dominio www.universalpet.co)
+1. **Verificar versión**: Debe mostrar `v1.1.3` en esquina superior derecha
+2. **Recarga dura**: Ctrl+F5
+3. **Verificar VirtualHost**: 
    - ¿El cliente tiene configurado `api.universalpet.co` en el VirtualHost?
    - ¿Está registrado en el archivo hosts?
-6. **Probar manualmente la API**: 
-   - Acceder a `http://api.universalpet.co/api/razas` desde el navegador
+4. **Probar manualmente**: 
+   - Accede a `http://api.universalpet.co/api/razas` desde el navegador
    - Debe retornar un JSON con las razas
-7. **Verificar CORS**: Si las llamadas retornan errores CORS, el backend Laravel debe permitir el origen
+5. **Verificar CORS**: El backend Laravel debe permitir el origen
 
 ---
 
-**Documento técnico v1.2 | 2026-08-13**
+**Documento técnico v1.3 | 2026-08-13**
