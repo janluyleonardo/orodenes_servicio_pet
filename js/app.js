@@ -630,7 +630,7 @@ function buildConsentimientoPayload() {
     const otherBreedVal = petBreedVal === 'Otro' ? safeVal('otherBreedInput') : '';
 
     return {
-        cedula: (cedulaVal || '').toString().trim(),
+        cedula: (cedulaVal || '').toString().trim() || 'N/A',
         fecha: safeVal('fecha'),
         hora: safeVal('hora'),
         precio: precioSanitizado,
@@ -726,7 +726,10 @@ async function saveConsentimiento(data) {
 
 function fillPdfContent(data) {
     const precioInput = document.querySelector('input[aria-label="Amount (to the nearest dollar)"]');
-    document.getElementById('pdfCedula').textContent = data.cedula || '';
+    const pdfCedulaEl = document.getElementById('pdfCedula');
+    if (pdfCedulaEl) {
+        pdfCedulaEl.textContent = data.cedula || '';
+    }
     document.getElementById('pdfFecha').textContent = data.fecha || '';
     document.getElementById('pdfHora').textContent = data.hora || '';
     document.getElementById('pdfPrecio').textContent = data.precio || (precioInput ? precioInput.value : '');
@@ -763,7 +766,7 @@ function showSuccess(message) {
 
 function waitForImageLoad(img) {
     return new Promise(resolve => {
-        if (!img) {
+        if (!img || !img.src) {
             resolve();
             return;
         }
@@ -788,7 +791,7 @@ function sanitizePdfFileName(value) {
 
 function getConsentimientoPdfFileName(data) {
     const parts = [
-        sanitizePdfFileName(data.cedula || document.getElementById('cedula')?.value || ''),
+        sanitizePdfFileName(data.telefono || document.getElementById('ownerPhone')?.value || ''),
         sanitizePdfFileName(data.nombre_mascota || document.getElementById('petName')?.value || ''),
         sanitizePdfFileName(data.nombre_dueno || document.getElementById('ownerName')?.value || '')
     ].filter(Boolean);
@@ -822,8 +825,12 @@ document.getElementById('consentForm').addEventListener('submit', async function
         const pdfContent = document.getElementById('pdfContent');
         if (pdfContent) pdfContent.style.display = 'block';
         const signatureImg = document.getElementById('pdfSignature');
+        const petPhotoImg = document.getElementById('pdfPetPhoto');
 
-        await waitForImageLoad(signatureImg);
+        await Promise.all([
+            waitForImageLoad(signatureImg),
+            waitForImageLoad(petPhotoImg)
+        ]);
 
         try {
             const canvasResult = await html2canvas(pdfContent, { scale: 2, logging: false, useCORS: true });
